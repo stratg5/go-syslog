@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"time"
 
-	"github.com/cnaude/go-syslog/parser/v3"
+	syslogparser "github.com/cnaude/go-syslog/parser/v3"
 )
 
 type LogParts map[string]interface{}

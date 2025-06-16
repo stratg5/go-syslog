@@ -1,4 +1,4 @@
-module github.com/cnaude/go-syslog/rfc3164/v3
+module github.com/stratg5/go-syslog/rfc3164/v3
 
 go 1.18
 
