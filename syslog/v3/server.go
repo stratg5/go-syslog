@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cnaude/go-syslog/format/v3"
+	"github.com/stratg5/go-syslog/format/v3"
 )
 
 var (
@@ -36,7 +36,7 @@ type Server struct {
 	datagramChannelSize     int
 	datagramChannel         chan DatagramMessage
 	format                  format.Format
-	scanBufferSize					int
+	scanBufferSize          int
 	handler                 Handler
 	lastError               error
 	readTimeoutMilliseconds int64
@@ -44,7 +44,7 @@ type Server struct {
 	datagramPool            sync.Pool
 }
 
-//NewServer returns a new Server
+// NewServer returns a new Server
 func NewServer() *Server {
 	return &Server{tlsPeerNameFunc: defaultTlsPeerName, datagramPool: sync.Pool{
 		New: func() interface{} {
@@ -56,22 +56,22 @@ func NewServer() *Server {
 	}
 }
 
-//Sets the maximum scanner buffer size
+// Sets the maximum scanner buffer size
 func (s *Server) SetScannerBufferSize(i int) {
 	s.scanBufferSize = i
 }
 
-//Sets the syslog format (RFC3164 or RFC5424 or RFC6587)
+// Sets the syslog format (RFC3164 or RFC5424 or RFC6587)
 func (s *Server) SetFormat(f format.Format) {
 	s.format = f
 }
 
-//Sets the handler, this handler with receive every syslog entry
+// Sets the handler, this handler with receive every syslog entry
 func (s *Server) SetHandler(handler Handler) {
 	s.handler = handler
 }
 
-//Sets the connection timeout for TCP connections, in milliseconds
+// Sets the connection timeout for TCP connections, in milliseconds
 func (s *Server) SetTimeout(millseconds int64) {
 	s.readTimeoutMilliseconds = millseconds
 }
@@ -95,7 +95,7 @@ func defaultTlsPeerName(tlsConn *tls.Conn) (tlsPeer string, ok bool) {
 	return cn, true
 }
 
-//Configure the server for listen on an UDP addr
+// Configure the server for listen on an UDP addr
 func (s *Server) ListenUDP(addr string) error {
 	udpAddr, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
@@ -112,7 +112,7 @@ func (s *Server) ListenUDP(addr string) error {
 	return nil
 }
 
-//Configure the server for listen on an unix socket
+// Configure the server for listen on an unix socket
 func (s *Server) ListenUnixgram(addr string) error {
 	unixAddr, err := net.ResolveUnixAddr("unixgram", addr)
 	if err != nil {
@@ -129,7 +129,7 @@ func (s *Server) ListenUnixgram(addr string) error {
 	return nil
 }
 
-//Configure the server for listen on a TCP addr
+// Configure the server for listen on a TCP addr
 func (s *Server) ListenTCP(addr string) error {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
 	if err != nil {
@@ -146,7 +146,7 @@ func (s *Server) ListenTCP(addr string) error {
 	return nil
 }
 
-//Configure the server for listen on a TCP addr for TLS
+// Configure the server for listen on a TCP addr for TLS
 func (s *Server) ListenTCPTLS(addr string, config *tls.Config) error {
 	listener, err := tls.Listen("tcp", addr, config)
 	if err != nil {
@@ -158,7 +158,7 @@ func (s *Server) ListenTCPTLS(addr string, config *tls.Config) error {
 	return nil
 }
 
-//Starts the server, all the go routines goes to live
+// Starts the server, all the go routines goes to live
 func (s *Server) Boot() error {
 	if s.format == nil {
 		return errors.New("please set a valid format")
@@ -256,7 +256,7 @@ loop:
 		if s.readTimeoutMilliseconds > 0 {
 			scanCloser.closer.SetReadDeadline(time.Now().Add(time.Duration(s.readTimeoutMilliseconds) * time.Millisecond))
 		}
-		if scanCloser.Scan() {			
+		if scanCloser.Scan() {
 			s.parser([]byte(scanCloser.Text()), client, tlsPeer)
 		} else {
 			break loop
@@ -288,12 +288,12 @@ func (s *Server) parser(line []byte, client string, tlsPeer string) {
 	s.handler.Handle(logParts, int64(len(line)), err)
 }
 
-//Returns the last error
+// Returns the last error
 func (s *Server) GetLastError() error {
 	return s.lastError
 }
 
-//Kill the server
+// Kill the server
 func (s *Server) Kill() error {
 	for _, connection := range s.connections {
 		err := connection.Close()
@@ -318,7 +318,7 @@ func (s *Server) Kill() error {
 	return nil
 }
 
-//Waits until the server stops
+// Waits until the server stops
 func (s *Server) Wait() {
 	s.wait.Wait()
 }

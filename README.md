@@ -9,7 +9,7 @@ Installation
 The recommended way to install go-syslog
 
 ```
-go get github.com/cnaude/go-syslog/syslog/v3
+go get github.com/stratg5/go-syslog/syslog/v3
 ```
 
 Examples
@@ -18,7 +18,7 @@ Examples
 How import the package
 
 ```go
-import "github.com/cnaude/go-syslog/syslog/v3"
+import "github.com/stratg5/go-syslog/syslog/v3"
 ```
 
 Example of a basic syslog [UDP server](example/v3/basic_udp.go):
