@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cnaude/go-syslog/parser/v3"
+	syslogparser "github.com/stratg5/go-syslog/parser/v3"
 	. "gopkg.in/check.v1"
 )
 

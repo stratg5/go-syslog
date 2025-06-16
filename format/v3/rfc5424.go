@@ -3,7 +3,7 @@ package format
 import (
 	"bufio"
 
-	"github.com/cnaude/go-syslog/rfc5424/v3"
+	"github.com/stratg5/go-syslog/rfc5424/v3"
 )
 
 type RFC5424 struct{}
