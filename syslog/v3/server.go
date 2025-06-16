@@ -31,6 +31,7 @@ type TlsPeerNameFunc func(tlsConn *tls.Conn) (tlsPeer string, ok bool)
 type Server struct {
 	listeners               []net.Listener
 	connections             []net.PacketConn
+	tcpConnections          []net.Conn
 	wait                    sync.WaitGroup
 	doneTcp                 chan bool
 	datagramChannelSize     int
@@ -46,13 +47,16 @@ type Server struct {
 
 // NewServer returns a new Server
 func NewServer() *Server {
-	return &Server{tlsPeerNameFunc: defaultTlsPeerName, datagramPool: sync.Pool{
-		New: func() interface{} {
-			return make([]byte, 65536)
+	return &Server{
+		tlsPeerNameFunc: defaultTlsPeerName,
+		datagramPool: sync.Pool{
+			New: func() interface{} {
+				return make([]byte, 65536)
+			},
 		},
-	},
 
 		datagramChannelSize: datagramChannelBufferSize,
+		tcpConnections:      []net.Conn{},
 	}
 }
 
@@ -198,6 +202,8 @@ func (s *Server) goAcceptConnection(listener net.Listener) {
 				continue
 			}
 
+			s.tcpConnections = append(s.tcpConnections, connection)
+
 			s.goScanConnection(connection)
 		}
 
@@ -298,6 +304,13 @@ func (s *Server) GetLastError() error {
 func (s *Server) Kill() error {
 	for _, connection := range s.connections {
 		err := connection.Close()
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, tcpConnection := range s.tcpConnections {
+		err := tcpConnection.Close()
 		if err != nil {
 			return err
 		}
