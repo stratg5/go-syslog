@@ -2,6 +2,7 @@ package syslog
 
 import (
 	"bufio"
+	"context"
 	"crypto/tls"
 	"errors"
 	"net"
@@ -161,7 +162,7 @@ func (s *Server) ListenTCPTLS(addr string, config *tls.Config) error {
 }
 
 // Starts the server, all the go routines goes to live
-func (s *Server) Boot() error {
+func (s *Server) Boot(ctx context.Context) error {
 	if s.format == nil {
 		return errors.New("please set a valid format")
 	}
@@ -171,7 +172,7 @@ func (s *Server) Boot() error {
 	}
 
 	for _, listener := range s.listeners {
-		s.goAcceptConnection(listener)
+		s.goAcceptConnection(ctx, listener)
 	}
 
 	if len(s.connections) > 0 {
@@ -185,7 +186,7 @@ func (s *Server) Boot() error {
 	return nil
 }
 
-func (s *Server) goAcceptConnection(listener net.Listener) {
+func (s *Server) goAcceptConnection(ctx context.Context, listener net.Listener) {
 	s.wait.Add(1)
 	go func(listener net.Listener) {
 	loop:
@@ -200,14 +201,14 @@ func (s *Server) goAcceptConnection(listener net.Listener) {
 				continue
 			}
 
-			s.goScanConnection(connection)
+			s.goScanConnection(ctx, connection)
 		}
 
 		s.wait.Done()
 	}(listener)
 }
 
-func (s *Server) goScanConnection(connection net.Conn) {
+func (s *Server) goScanConnection(ctx context.Context, connection net.Conn) {
 	scanner := bufio.NewScanner(connection)
 	if sf := s.format.GetSplitFunc(); sf != nil {
 		scanner.Split(sf)
@@ -244,23 +245,36 @@ func (s *Server) goScanConnection(connection net.Conn) {
 	scanCloser = &ScanCloser{scanner, connection}
 
 	s.wait.Add(1)
-	go s.scan(scanCloser, client, tlsPeer)
+	go s.scan(ctx, scanCloser, client, tlsPeer)
 }
 
-func (s *Server) scan(scanCloser *ScanCloser, client string, tlsPeer string) {
+func (s *Server) scan(ctx context.Context, scanCloser *ScanCloser, client string, tlsPeer string) {
+	innerCtx, done := context.WithCancel(ctx)
+	go func() {
+		<-innerCtx.Done()
+
+		scanCloser.closer.Close()
+	}()
+
 loop:
 	for {
 		select {
 		case <-s.doneTcp:
+			done()
+
 			break loop
 		default:
 		}
+
 		if s.readTimeoutMilliseconds > 0 {
 			scanCloser.closer.SetReadDeadline(time.Now().Add(time.Duration(s.readTimeoutMilliseconds) * time.Millisecond))
 		}
+
 		if scanCloser.Scan() {
 			s.parser([]byte(scanCloser.Text()), client, tlsPeer)
 		} else {
+			done()
+
 			break loop
 		}
 	}

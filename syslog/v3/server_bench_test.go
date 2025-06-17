@@ -2,6 +2,7 @@ package syslog
 
 import (
 	"bufio"
+	"context"
 	"io"
 	"net"
 	"testing"
@@ -94,7 +95,7 @@ func BenchmarkTCPNoFormatting(b *testing.B) {
 	server.SetFormat(noopFormatter{})
 	server.SetHandler(handler)
 	server.ListenTCP("127.0.0.1:0")
-	server.Boot()
+	server.Boot(context.Background())
 	conn, _ := net.DialTimeout("tcp", server.listeners[0].Addr().String(), time.Second)
 	msg := []byte(exampleSyslog + "\n")
 	b.SetBytes(int64(len(msg)))

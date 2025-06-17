@@ -1,6 +1,7 @@
 package syslog
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
@@ -61,7 +62,7 @@ func (s *ServerSuite) TestTLS(c *C) {
 	server.SetHandler(handler)
 	server.ListenTCPTLS("0.0.0.0:5143", getServerConfig())
 
-	server.Boot()
+	server.Boot(context.Background())
 	go func(server *Server) {
 		time.Sleep(100 * time.Millisecond)
 		conn, err := tls.Dial("tcp", "127.0.0.1:5143", getClientConfig())
