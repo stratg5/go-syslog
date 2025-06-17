@@ -278,7 +278,6 @@ loop:
 			break loop
 		}
 	}
-	scanCloser.closer.Close()
 
 	s.wait.Done()
 }
