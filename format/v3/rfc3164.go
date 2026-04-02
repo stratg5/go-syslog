@@ -13,13 +13,8 @@ func (f *RFC3164) GetParser(line []byte) LogParser {
 }
 
 func (f *RFC3164) GetSplitFunc() bufio.SplitFunc {
-	return rfc3164ScannerSplit
-}
-
-func rfc3164ScannerSplit(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	if atEOF && len(data) == 0 {
-		return 0, nil, nil
-	}
-	// return all of the data without splitting
-	return len(data), data, nil
+	// Return nil so bufio.Scanner uses its default ScanLines split function,
+	// which splits on newline delimiters. This is the correct behavior for
+	// TCP syslog using non-transparent framing (newline-delimited messages).
+	return nil
 }
